@@ -13,6 +13,11 @@ set PANEL=C:\Users\0107409306\AppData\Local\miniconda3\Scripts\panel.exe
     --cookie-secret 56d86929a4314d8a9720938daeba9ce6e6cb3d947dd157fb65a1e3c9ff85c33d ^
     --port 5006 ^
     --address 127.0.0.1 ^
-    --allow-websocket-origin=localhost:5006
+    --allow-websocket-origin=localhost:5006 ^
+    --num-threads 2 ^
+    --check-unused-sessions 60000 ^
+    --unused-session-lifetime 900000 ^
+    --liveness ^
+    --keep-alive 30000
 
 endlocal
