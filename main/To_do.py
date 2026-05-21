@@ -680,7 +680,7 @@ class TodoApp(param.Parameterized):
     # カレンダー表示（7日グリッド）
     # =====================
     def _update_calendar(self) -> None:
-        """月間7日グリッドカレンダーをHTML生成."""
+        """月間7日グリッドカレンダーをHTML生成（インラインスタイルで確実に7列表示）."""
         today = dt.date.today()
         year, month = self.cal_year, self.cal_month
         self._cal_title.object = f"**{year}年 {month}月**"
@@ -696,39 +696,67 @@ class TodoApp(param.Parameterized):
                 d = cast(dt.date, d)
                 task_by_date.setdefault(d, []).append(r)
 
-        # HTMLグリッド構築
-        html_parts = ['<div class="cal-grid">']
-        for day_name in WDAYS:
-            html_parts.append(f'<div class="cal-header">{day_name}</div>')
+        # ---- インラインスタイル定義 ----
+        S_GRID    = "display:grid;grid-template-columns:repeat(7,1fr);gap:4px;width:100%;box-sizing:border-box;"
+        S_HEADER  = "text-align:center;font-weight:bold;padding:6px 0;background:#f0f0f0;border-radius:4px;font-size:0.85em;"
+        S_CELL    = "min-height:90px;border:1px solid #e8e8e8;border-radius:6px;padding:4px;font-size:0.8em;overflow-y:auto;max-height:150px;background:#fafafa;vertical-align:top;"
+        S_CELL_TODAY   = "min-height:90px;border:2px solid #1890ff;border-radius:6px;padding:4px;font-size:0.8em;overflow-y:auto;max-height:150px;background:#e6f7ff;vertical-align:top;"
+        S_CELL_OTHER   = "min-height:90px;border:1px solid #e8e8e8;border-radius:6px;padding:4px;font-size:0.8em;overflow-y:auto;max-height:150px;background:#fafafa;opacity:0.4;vertical-align:top;"
+        S_DAYNUM  = "font-weight:bold;font-size:1.05em;margin-bottom:3px;color:#333;"
+        S_DAYNUM_TODAY = "font-weight:bold;font-size:1.05em;margin-bottom:3px;color:#1890ff;"
+        S_TASK    = "background:#fff;border-radius:3px;padding:2px 5px;margin:2px 0;border-left:3px solid #1890ff;font-size:0.82em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
+        S_TASK_OD = "background:#fff1f0;border-radius:3px;padding:2px 5px;margin:2px 0;border-left:3px solid #ff4d4f;font-size:0.82em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#ff4d4f;"
+        S_SAT     = "color:#1890ff;"
+        S_SUN     = "color:#ff4d4f;"
 
+        # ---- HTMLグリッド構築 ----
+        html_parts = [f'<div style="{S_GRID}">']
+
+        # ヘッダー行（月〜日）
+        for i, day_name in enumerate(WDAYS):
+            extra = ""
+            if i == 5:   extra = "color:#1890ff;"
+            elif i == 6: extra = "color:#ff4d4f;"
+            html_parts.append(f'<div style="{S_HEADER}{extra}">{day_name}</div>')
+
+        # 週行
         for week in weeks:
-            for day in week:
-                classes = ["cal-cell"]
-                if day == today:
-                    classes.append("today")
-                if day.month != month:
-                    classes.append("other-month")
+            for i, day in enumerate(week):
+                is_today      = (day == today)
+                is_other_month = (day.month != month)
+                is_overdue_day = (day < today)
+
+                if is_today:
+                    cell_style = S_CELL_TODAY
+                    num_style  = S_DAYNUM_TODAY
+                elif is_other_month:
+                    cell_style = S_CELL_OTHER
+                    num_style  = S_DAYNUM
+                else:
+                    cell_style = S_CELL
+                    num_style  = S_DAYNUM
+
+                # 土日の数字色
+                if i == 5:
+                    num_style = S_DAYNUM + S_SAT
+                elif i == 6:
+                    num_style = S_DAYNUM + S_SUN
 
                 tasks = task_by_date.get(day, [])
                 tasks_html = ""
-                for t in tasks[:4]:  # 最大4件表示
-                    t_title = html_escape(str(t["title"]))[:20]
+                for t in tasks[:4]:
+                    t_title = html_escape(str(t["title"]))[:18]
                     q_color, _ = QUADRANT_COLORS.get(str(t["quadrant"]), ("#999", "#f9f9f9"))
-                    overdue = (day < today)
-                    overdue_cls = " overdue" if overdue else ""
-                    tasks_html += (
-                        f'<div class="cal-task{overdue_cls}" '
-                        f'style="border-left-color:{q_color};">'
-                        f'{t_title}</div>'
-                    )
+                    if is_overdue_day:
+                        tasks_html += f'<div style="{S_TASK_OD}">{t_title}</div>'
+                    else:
+                        tasks_html += f'<div style="{S_TASK}border-left-color:{q_color};">{t_title}</div>'
                 if len(tasks) > 4:
-                    tasks_html += f'<div style="font-size:0.75em;color:#999;">+{len(tasks)-4}件</div>'
+                    tasks_html += f'<div style="font-size:0.72em;color:#999;text-align:right;">+{len(tasks)-4}件</div>'
 
-                day_num = day.day
-                cls_str = " ".join(classes)
                 html_parts.append(
-                    f'<div class="{cls_str}">'
-                    f'<div class="cal-day-num">{day_num}</div>'
+                    f'<div style="{cell_style}">'
+                    f'<div style="{num_style}">{day.day}</div>'
                     f'{tasks_html}'
                     f'</div>'
                 )
