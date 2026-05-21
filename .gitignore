@@ -19,6 +19,9 @@ build/
 # Data files (local only)
 *.csv
 
+# Auth credentials (never commit)
+credentials.json
+
 # IDE
 .vscode/
 .idea/
