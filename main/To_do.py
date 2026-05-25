@@ -21,6 +21,44 @@ from bokeh.plotting import figure
 # =========================
 pn.extension("notifications", sizing_mode="stretch_width")
 
+# カスタムCSS（モダンデザイン）
+_CUSTOM_CSS = """
+:root {
+    --accent: #6366f1;
+    --accent-light: #a5b4fc;
+    --surface: #ffffff;
+    --surface-alt: #f8fafc;
+    --text: #1e293b;
+    --text-muted: #64748b;
+    --border: #e2e8f0;
+    --success: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+}
+.bk-root .bk-btn-success { background: var(--success) !important; border: none !important; border-radius: 8px !important; }
+.bk-root .bk-btn-danger { background: var(--danger) !important; border: none !important; border-radius: 8px !important; }
+.bk-root .bk-btn-warning { background: var(--warning) !important; border: none !important; border-radius: 8px !important; }
+.bk-root .bk-btn-primary { background: var(--accent) !important; border: none !important; border-radius: 8px !important; }
+.bk-root .bk-btn-light { background: #f1f5f9 !important; border: 1px solid var(--border) !important; border-radius: 8px !important; }
+.task-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin: 4px 0;
+    transition: box-shadow 0.2s, transform 0.1s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.task-card:hover {
+    box-shadow: 0 4px 12px rgba(99,102,241,0.12);
+    transform: translateY(-1px);
+}
+.task-overdue {
+    border-left: 4px solid var(--danger) !important;
+}
+"""
+pn.config.raw_css.append(_CUSTOM_CSS)
+
 # =========================
 # 設定
 # =========================
@@ -293,7 +331,10 @@ class TodoApp(param.Parameterized):
             pn.Row(self.edit_save_button, self.edit_cancel_button),
             pn.layout.Divider(),
             visible=False,
-            styles={"background": "#fffbe6", "padding": "8px", "border-radius": "8px"},
+            styles={"background": "linear-gradient(135deg, #fefce8, #fef9c3)",
+                    "padding": "12px", "border-radius": "12px",
+                    "border": "1px solid #fde047",
+                    "box-shadow": "0 2px 8px rgba(250,204,21,0.15)"},
         )
 
         self.filter_tag = pn.widgets.Select(
@@ -311,11 +352,16 @@ class TodoApp(param.Parameterized):
             toolbar_location=None,
             tools="",
         )
-        self._tag_bar_fig.vbar(x="tag", top="count", source=self._tag_count_source, width=0.85, color="#3b82f6")
+        self._tag_bar_fig.vbar(x="tag", top="count", source=self._tag_count_source, width=0.75, color="#6366f1", alpha=0.85)
         self._tag_bar_fig.y_range.start = 0
         self._tag_bar_fig.xgrid.grid_line_color = None
+        self._tag_bar_fig.ygrid.grid_line_dash = "dotted"
+        self._tag_bar_fig.ygrid.grid_line_alpha = 0.4
         self._tag_bar_fig.yaxis.axis_label = "件数"
         self._tag_bar_fig.xaxis.major_label_orientation = 0.9
+        self._tag_bar_fig.outline_line_color = None
+        self._tag_bar_fig.border_fill_color = None
+        self._tag_bar_fig.background_fill_color = None
 
         self.tag_bar_pane = pn.pane.Bokeh(self._tag_bar_fig, sizing_mode="stretch_width")  # [2](https://panel.holoviz.org/reference/panes/Bokeh.html)
 
@@ -323,12 +369,12 @@ class TodoApp(param.Parameterized):
         # GridSpec のセル再代入による overlap 警告を避けるため、セルは初回だけ配置し中身だけ更新する。 [3](https://panel.holoviz.org/reference/layouts/GridSpec.html)
         self.matrix_view = pn.GridSpec(nrows=2, ncols=2, min_height=620, mode="override")
 
-        # ③ Matrix セル色分け（象限別）
+        # ③ Matrix セル色分け（象限別）— モダンなグラデーション風
         self._quadrant_styles = {
-            QUADRANTS[0]: {"background": "#ffecec", "border-left": "8px solid #ff4d4f"},  # Do
-            QUADRANTS[1]: {"background": "#e6f7ff", "border-left": "8px solid #1890ff"},  # Schedule
-            QUADRANTS[2]: {"background": "#fff7e6", "border-left": "8px solid #fa8c16"},  # Delegate
-            QUADRANTS[3]: {"background": "#f5f5f5", "border-left": "8px solid #8c8c8c"},  # Eliminate
+            QUADRANTS[0]: {"background": "linear-gradient(135deg, #fef2f2, #fee2e2)", "border-left": "5px solid #ef4444"},
+            QUADRANTS[1]: {"background": "linear-gradient(135deg, #eff6ff, #dbeafe)", "border-left": "5px solid #6366f1"},
+            QUADRANTS[2]: {"background": "linear-gradient(135deg, #fffbeb, #fef3c7)", "border-left": "5px solid #f59e0b"},
+            QUADRANTS[3]: {"background": "linear-gradient(135deg, #f8fafc, #f1f5f9)", "border-left": "5px solid #94a3b8"},
         }
 
         self._matrix_cells: list[pn.Column] = []
@@ -337,9 +383,10 @@ class TodoApp(param.Parameterized):
             # 共通の見た目
             styles.update(
                 {
-                    "padding": "10px",
-                    "border-radius": "10px",
-                    "box-shadow": "0 1px 2px rgba(0,0,0,0.08)",
+                    "padding": "14px",
+                    "border-radius": "16px",
+                    "box-shadow": "0 2px 8px rgba(0,0,0,0.06)",
+                    "backdrop-filter": "blur(4px)",
                 }
             )
 
@@ -519,19 +566,20 @@ class TodoApp(param.Parameterized):
             date_str = f"{deadline.strftime('%m/%d')} ({WDAYS[deadline.weekday()]})"
             is_overdue = (deadline < dt.date.today()) and (not completed)
 
-        style = {"color": "red", "font-weight": "bold"} if is_overdue else {}
+        style = {"color": "#ef4444", "font-weight": "600"} if is_overdue else {"color": "#1e293b"}
+        card_class = "task-card task-overdue" if is_overdue else "task-card"
 
         btn_done = pn.widgets.Button(
             name="✔" if not completed else "↩",
-            width=44,
+            width=40,
             button_type="success" if not completed else "warning",
         )
         btn_done.on_click(lambda _e, tid=int(r["id"]): self.toggle_complete(tid))
 
-        btn_edit = pn.widgets.Button(name="✏️", width=44, button_type="light")
+        btn_edit = pn.widgets.Button(name="✏️", width=40, button_type="light")
         btn_edit.on_click(lambda _e, tid=int(r["id"]): self.start_edit(tid))
 
-        btn_del = pn.widgets.Button(name="🗑", width=44, button_type="danger")
+        btn_del = pn.widgets.Button(name="🗑", width=40, button_type="danger")
         btn_del.on_click(lambda _e, tid=int(r["id"]): self.delete_task(tid))
 
         return pn.Row(
@@ -539,10 +587,14 @@ class TodoApp(param.Parameterized):
             btn_edit,
             btn_del,
             pn.pane.Markdown(
-                f"**{title}**  \n📅 {date_str} | 🏷️ {tags}",
+                f"**{title}**  \n<span style='color:#64748b;font-size:0.85em'>📅 {date_str} &nbsp;│&nbsp; 🏷️ {tags}</span>",
                 styles=style,
             ),
             sizing_mode="stretch_width",
+            css_classes=[card_class],
+            styles={"border-radius": "12px", "padding": "8px 12px", "margin": "4px 0",
+                    "background": "#ffffff", "border": "1px solid #e2e8f0",
+                    "box-shadow": "0 1px 3px rgba(0,0,0,0.04)"},
         )
 
     # =====================
@@ -627,22 +679,25 @@ class TodoApp(param.Parameterized):
 app = TodoApp()
 
 template = pn.template.FastListTemplate(
-    title="Eisenhower Matrix ToDo",
+    title="✨ Eisenhower Matrix ToDo",
     sidebar=[
-        "## 新規タスク",
+        "## 📝 新規タスク",
         app.title_input,
         app.quadrant_input,
         app.deadline_input,
-        app.tags_select,      # ①スクロール選択
+        app.tags_select,
         app.add_button,
         pn.layout.Divider(),
-        app.edit_form,        # 編集フォーム（✏️クリック時に表示）
+        app.edit_form,
         app.filter_tag,
         pn.layout.Divider(),
-        "## Tag別タスク数",
-        app.tag_bar_pane,     # ②棒グラフ
+        "## 📊 Tag別タスク数",
+        app.tag_bar_pane,
     ],
     main=[app.tabs],
+    accent_base_color="#6366f1",
+    header_background="#6366f1",
+    sidebar_width=320,
 )
 
 template.servable()
