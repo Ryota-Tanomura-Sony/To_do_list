@@ -25,8 +25,11 @@ pn.extension("notifications", sizing_mode="stretch_width")
 # 設定
 # =========================
 BASE_DIR = Path(__file__).resolve().parent
-DATA_FILE = BASE_DIR / "todo_list.csv"
-LOG_FILE = BASE_DIR / "activity_log.csv"
+# データファイルはホームディレクトリ固定（worktree切替・再起動でもデータが消えない）
+_DATA_DIR = Path.home() / "Documents" / "ToDoAppData"
+_DATA_DIR.mkdir(parents=True, exist_ok=True)
+DATA_FILE = _DATA_DIR / "todo_list.csv"
+LOG_FILE = _DATA_DIR / "activity_log.csv"
 ENCODING = "utf-8-sig"
 
 WDAYS = ["月", "火", "水", "木", "金", "土", "日"]
@@ -266,6 +269,33 @@ class TodoApp(param.Parameterized):
 
         self.add_button = pn.widgets.Button(name="追加", button_type="primary")
 
+        # ---------- 編集フォーム ----------
+        self._editing_id: Optional[int] = None
+
+        self.edit_title_input = pn.widgets.TextInput(name="タスク名（編集）")
+        self.edit_quadrant_input = pn.widgets.Select(name="象限（編集）", options=QUADRANTS, value=QUADRANTS[1])
+        self.edit_deadline_input = pn.widgets.DatePicker(name="期限（編集）", value=dt.date.today())
+        self.edit_tags_select = pn.widgets.MultiSelect(
+            name="タグ（編集・複数可）",
+            options=TAGS,
+            value=[],
+            size=min(10, max(6, len(TAGS))),
+        )
+        self.edit_save_button = pn.widgets.Button(name="💾 保存", button_type="success")
+        self.edit_cancel_button = pn.widgets.Button(name="キャンセル", button_type="default")
+
+        self.edit_form = pn.Column(
+            pn.pane.Markdown("## ✏️ タスク編集"),
+            self.edit_title_input,
+            self.edit_quadrant_input,
+            self.edit_deadline_input,
+            self.edit_tags_select,
+            pn.Row(self.edit_save_button, self.edit_cancel_button),
+            pn.layout.Divider(),
+            visible=False,
+            styles={"background": "#fffbe6", "padding": "8px", "border-radius": "8px"},
+        )
+
         self.filter_tag = pn.widgets.Select(
             name="タグで絞り込み",
             options=["すべて"] + TAGS,
@@ -334,6 +364,8 @@ class TodoApp(param.Parameterized):
 
         # ---------- イベント ----------
         self.add_button.on_click(self.add_task)
+        self.edit_save_button.on_click(self.save_edit)
+        self.edit_cancel_button.on_click(self.cancel_edit)
         self.filter_tag.param.watch(lambda _e: self.refresh_ui(), "value")
 
         self.refresh_ui()
@@ -378,6 +410,52 @@ class TodoApp(param.Parameterized):
             _notify("success", "タスクを追加しました")
         except Exception as e:
             _notify("error", f"追加に失敗しました: {e!s}")
+
+    def start_edit(self, task_id: int) -> None:
+        """編集フォームを指定タスクの値で開く."""
+        mask = self.df["id"] == int(task_id)
+        if not mask.any():
+            _notify("error", "対象タスクが見つかりません")
+            return
+        row = self.df.loc[mask].iloc[0]
+        self._editing_id = int(task_id)
+        self.edit_title_input.value = str(row["title"])
+        self.edit_quadrant_input.value = row["quadrant"] if row["quadrant"] in QUADRANTS else QUADRANTS[1]
+        deadline = row["deadline"]
+        self.edit_deadline_input.value = deadline if (deadline is not None and not pd.isna(deadline)) else dt.date.today()
+        self.edit_tags_select.value = _normalize_tags(str(row["tags"]))
+        self.edit_form.visible = True
+
+    def save_edit(self, _event: Any) -> None:
+        """編集内容をDataFrameに反映して保存."""
+        if self._editing_id is None:
+            return
+        try:
+            mask = self.df["id"] == int(self._editing_id)
+            if not mask.any():
+                _notify("error", "対象タスクが見つかりません")
+                return
+            title = self.edit_title_input.value.strip()
+            if not title:
+                _notify("error", "タスク名を入力してください")
+                return
+            self.df.loc[mask, "title"] = title
+            self.df.loc[mask, "quadrant"] = self.edit_quadrant_input.value
+            self.df.loc[mask, "deadline"] = self.edit_deadline_input.value
+            self.df.loc[mask, "tags"] = _tags_to_str(self.edit_tags_select.value)
+            save_data(self.df)
+            _log_action("edit", self._editing_id, title)
+            self._editing_id = None
+            self.edit_form.visible = False
+            self.refresh_ui()
+            _notify("success", "タスクを更新しました")
+        except Exception as e:
+            _notify("error", f"更新に失敗しました: {e!s}")
+
+    def cancel_edit(self, _event: Any) -> None:
+        """編集フォームを閉じる."""
+        self._editing_id = None
+        self.edit_form.visible = False
 
     def toggle_complete(self, task_id: int) -> None:
         """完了フラグをトグル（完了→未完了も可能）."""
@@ -450,11 +528,15 @@ class TodoApp(param.Parameterized):
         )
         btn_done.on_click(lambda _e, tid=int(r["id"]): self.toggle_complete(tid))
 
+        btn_edit = pn.widgets.Button(name="✏️", width=44, button_type="light")
+        btn_edit.on_click(lambda _e, tid=int(r["id"]): self.start_edit(tid))
+
         btn_del = pn.widgets.Button(name="🗑", width=44, button_type="danger")
         btn_del.on_click(lambda _e, tid=int(r["id"]): self.delete_task(tid))
 
         return pn.Row(
             btn_done,
+            btn_edit,
             btn_del,
             pn.pane.Markdown(
                 f"**{title}**  \n📅 {date_str} | 🏷️ {tags}",
@@ -554,6 +636,7 @@ template = pn.template.FastListTemplate(
         app.tags_select,      # ①スクロール選択
         app.add_button,
         pn.layout.Divider(),
+        app.edit_form,        # 編集フォーム（✏️クリック時に表示）
         app.filter_tag,
         pn.layout.Divider(),
         "## Tag別タスク数",
