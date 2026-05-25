@@ -21,41 +21,13 @@ from bokeh.plotting import figure
 # =========================
 pn.extension("notifications", sizing_mode="stretch_width")
 
-# カスタムCSS（モダンデザイン）
+# カスタムCSS（モダンデザイン - raw_cssで安全に注入）
 _CUSTOM_CSS = """
-:root {
-    --accent: #6366f1;
-    --accent-light: #a5b4fc;
-    --surface: #ffffff;
-    --surface-alt: #f8fafc;
-    --text: #1e293b;
-    --text-muted: #64748b;
-    --border: #e2e8f0;
-    --success: #10b981;
-    --danger: #ef4444;
-    --warning: #f59e0b;
-}
-.bk-root .bk-btn-success { background: var(--success) !important; border: none !important; border-radius: 8px !important; }
-.bk-root .bk-btn-danger { background: var(--danger) !important; border: none !important; border-radius: 8px !important; }
-.bk-root .bk-btn-warning { background: var(--warning) !important; border: none !important; border-radius: 8px !important; }
-.bk-root .bk-btn-primary { background: var(--accent) !important; border: none !important; border-radius: 8px !important; }
-.bk-root .bk-btn-light { background: #f1f5f9 !important; border: 1px solid var(--border) !important; border-radius: 8px !important; }
-.task-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 12px 16px;
-    margin: 4px 0;
-    transition: box-shadow 0.2s, transform 0.1s;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-}
-.task-card:hover {
-    box-shadow: 0 4px 12px rgba(99,102,241,0.12);
-    transform: translateY(-1px);
-}
-.task-overdue {
-    border-left: 4px solid var(--danger) !important;
-}
+.bk-btn-success { background: #10b981 !important; border: none !important; border-radius: 8px !important; color: #fff !important; }
+.bk-btn-danger  { background: #ef4444 !important; border: none !important; border-radius: 8px !important; color: #fff !important; }
+.bk-btn-warning { background: #f59e0b !important; border: none !important; border-radius: 8px !important; color: #fff !important; }
+.bk-btn-primary { background: #6366f1 !important; border: none !important; border-radius: 8px !important; color: #fff !important; }
+.bk-btn-light   { background: #f1f5f9 !important; border: 1px solid #e2e8f0 !important; border-radius: 8px !important; }
 """
 pn.config.raw_css.append(_CUSTOM_CSS)
 
@@ -369,24 +341,22 @@ class TodoApp(param.Parameterized):
         # GridSpec のセル再代入による overlap 警告を避けるため、セルは初回だけ配置し中身だけ更新する。 [3](https://panel.holoviz.org/reference/layouts/GridSpec.html)
         self.matrix_view = pn.GridSpec(nrows=2, ncols=2, min_height=620, mode="override")
 
-        # ③ Matrix セル色分け（象限別）— モダンなグラデーション風
+        # ③ Matrix セル色分け（象限別）
         self._quadrant_styles = {
-            QUADRANTS[0]: {"background": "linear-gradient(135deg, #fef2f2, #fee2e2)", "border-left": "5px solid #ef4444"},
-            QUADRANTS[1]: {"background": "linear-gradient(135deg, #eff6ff, #dbeafe)", "border-left": "5px solid #6366f1"},
-            QUADRANTS[2]: {"background": "linear-gradient(135deg, #fffbeb, #fef3c7)", "border-left": "5px solid #f59e0b"},
-            QUADRANTS[3]: {"background": "linear-gradient(135deg, #f8fafc, #f1f5f9)", "border-left": "5px solid #94a3b8"},
+            QUADRANTS[0]: {"background": "#fff0f0", "border-left": "5px solid #ef4444"},
+            QUADRANTS[1]: {"background": "#eff6ff", "border-left": "5px solid #6366f1"},
+            QUADRANTS[2]: {"background": "#fffbeb", "border-left": "5px solid #f59e0b"},
+            QUADRANTS[3]: {"background": "#f8fafc", "border-left": "5px solid #94a3b8"},
         }
 
         self._matrix_cells: list[pn.Column] = []
         for i, q in enumerate(QUADRANTS):
             styles = dict(self._quadrant_styles.get(q, {}))
-            # 共通の見た目
             styles.update(
                 {
-                    "padding": "14px",
-                    "border-radius": "16px",
-                    "box-shadow": "0 2px 8px rgba(0,0,0,0.06)",
-                    "backdrop-filter": "blur(4px)",
+                    "padding": "12px",
+                    "border-radius": "12px",
+                    "box-shadow": "0 2px 6px #0000000f",
                 }
             )
 
@@ -567,7 +537,18 @@ class TodoApp(param.Parameterized):
             is_overdue = (deadline < dt.date.today()) and (not completed)
 
         style = {"color": "#ef4444", "font-weight": "600"} if is_overdue else {"color": "#1e293b"}
-        card_class = "task-card task-overdue" if is_overdue else "task-card"
+
+        # タスクカードをHTMLで描画（css_classesとstyles混在を避ける）
+        border_color = "#ef4444" if is_overdue else "#e2e8f0"
+        title_color  = "#ef4444" if is_overdue else "#1e293b"
+        card_html = (
+            f'<div style="background:#ffffff;border:1px solid {border_color};'
+            f'border-left:4px solid {border_color};border-radius:10px;'
+            f'padding:8px 12px;margin:4px 0;">'
+            f'<span style="font-weight:600;color:{title_color}">{title}</span><br>'
+            f'<span style="color:#64748b;font-size:0.83em">📅 {date_str} &nbsp;│&nbsp; 🏷️ {tags}</span>'
+            f'</div>'
+        )
 
         btn_done = pn.widgets.Button(
             name="✔" if not completed else "↩",
@@ -583,18 +564,9 @@ class TodoApp(param.Parameterized):
         btn_del.on_click(lambda _e, tid=int(r["id"]): self.delete_task(tid))
 
         return pn.Row(
-            btn_done,
-            btn_edit,
-            btn_del,
-            pn.pane.Markdown(
-                f"**{title}**  \n<span style='color:#64748b;font-size:0.85em'>📅 {date_str} &nbsp;│&nbsp; 🏷️ {tags}</span>",
-                styles=style,
-            ),
+            pn.Column(btn_done, btn_edit, btn_del, width=50),
+            pn.pane.HTML(card_html, sizing_mode="stretch_width"),
             sizing_mode="stretch_width",
-            css_classes=[card_class],
-            styles={"border-radius": "12px", "padding": "8px 12px", "margin": "4px 0",
-                    "background": "#ffffff", "border": "1px solid #e2e8f0",
-                    "box-shadow": "0 1px 3px rgba(0,0,0,0.04)"},
         )
 
     # =====================
