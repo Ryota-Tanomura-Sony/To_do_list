@@ -19,7 +19,7 @@ from bokeh.plotting import figure
 # =========================
 # Panel 初期化
 # =========================
-pn.extension("notifications")
+pn.extension("notifications", sizing_mode="stretch_width")
 
 # カスタムCSS（モダンデザイン）
 _CUSTOM_CSS = """
@@ -363,7 +363,7 @@ class TodoApp(param.Parameterized):
         self._tag_bar_fig.border_fill_color = None
         self._tag_bar_fig.background_fill_color = None
 
-        self.tag_bar_pane = pn.pane.Bokeh(self._tag_bar_fig)
+        self.tag_bar_pane = pn.pane.Bokeh(self._tag_bar_fig, sizing_mode="stretch_width")  # [2](https://panel.holoviz.org/reference/panes/Bokeh.html)
 
         # ---------- 表示（Matrix / Calendar / Archive） ----------
         # GridSpec のセル再代入による overlap 警告を避けるため、セルは初回だけ配置し中身だけ更新する。 [3](https://panel.holoviz.org/reference/layouts/GridSpec.html)
@@ -393,18 +393,20 @@ class TodoApp(param.Parameterized):
             cell = pn.Column(
                 pn.pane.Markdown(f"### {q}"),
                 scroll=True,
+                sizing_mode="stretch_both",
                 styles=styles,
             )
             self._matrix_cells.append(cell)
             self.matrix_view[i // 2, i % 2] = cell  # 初回だけ
 
-        self.calendar_view = pn.Column(scroll=True)
-        self.archive_view = pn.Column(scroll=True)
+        self.calendar_view = pn.Column(scroll=True, sizing_mode="stretch_both")
+        self.archive_view = pn.Column(scroll=True, sizing_mode="stretch_both")
 
         self.tabs = pn.Tabs(
             ("マトリクス", self.matrix_view),
             ("カレンダー", self.calendar_view),
             ("完了一覧", self.archive_view),
+            sizing_mode="stretch_both",
         )
 
         # ---------- イベント ----------
@@ -565,7 +567,7 @@ class TodoApp(param.Parameterized):
             is_overdue = (deadline < dt.date.today()) and (not completed)
 
         style = {"color": "#ef4444", "font-weight": "600"} if is_overdue else {"color": "#1e293b"}
-        card_class = "task-card task-overdue" if is_overdue else "task-card"
+        card_classes = ["task-card", "task-overdue"] if is_overdue else ["task-card"]
 
         btn_done = pn.widgets.Button(
             name="✔" if not completed else "↩",
@@ -589,7 +591,7 @@ class TodoApp(param.Parameterized):
                 styles=style,
             ),
             sizing_mode="stretch_width",
-            css_classes=[card_class],
+            css_classes=card_classes,
             styles={"border-radius": "12px", "padding": "8px 12px", "margin": "4px 0",
                     "background": "#ffffff", "border": "1px solid #e2e8f0",
                     "box-shadow": "0 1px 3px rgba(0,0,0,0.04)"},
@@ -676,40 +678,26 @@ class TodoApp(param.Parameterized):
 # =========================
 app = TodoApp()
 
-# =========================
-# UI レイアウト（テンプレート代わり）
-# =========================
-sidebar_panel = pn.Column(
-    pn.pane.Markdown("# ✨ Eisenhower Matrix ToDo"),
-    pn.layout.Divider(),
-    pn.pane.Markdown("## 📝 新規タスク"),
-    app.title_input,
-    app.quadrant_input,
-    app.deadline_input,
-    app.tags_select,
-    app.add_button,
-    pn.layout.Divider(),
-    app.edit_form,
-    pn.pane.Markdown("## フィルタ"),
-    app.filter_tag,
-    pn.layout.Divider(),
-    pn.pane.Markdown("## 📊 Tag別タスク数"),
-    app.tag_bar_pane,
-    width=300,
-    height=900,
-    scroll=True,
-    margin=0,
+template = pn.template.FastListTemplate(
+    title="✨ Eisenhower Matrix ToDo",
+    sidebar=[
+        "## 📝 新規タスク",
+        app.title_input,
+        app.quadrant_input,
+        app.deadline_input,
+        app.tags_select,
+        app.add_button,
+        pn.layout.Divider(),
+        app.edit_form,
+        app.filter_tag,
+        pn.layout.Divider(),
+        "## 📊 Tag別タスク数",
+        app.tag_bar_pane,
+    ],
+    main=[app.tabs],
+    accent_base_color="#6366f1",
+    header_background="#6366f1",
+    sidebar_width=320,
 )
 
-main_panel = pn.Column(
-    pn.pane.Markdown("## タスク管理"),
-    app.tabs,
-    height=900,
-    width=1000,
-    margin=0,
-)
-
-# 水平レイアウト
-layout = pn.Row(sidebar_panel, main_panel, margin=0, height=900)
-
-layout.servable()
+template.servable()
