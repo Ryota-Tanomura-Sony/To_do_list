@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import calendar
 import datetime as dt
 import os
 import re
@@ -92,7 +93,9 @@ TAGS = [
     "社内会議",
 ]
 
-COLUMNS = ["id", "title", "quadrant", "deadline", "tags", "completed"]
+STATUSES = ["未着手", "進行中", "レビュー待ち", "保留"]
+
+COLUMNS = ["id", "title", "quadrant", "deadline", "tags", "status", "completed"]
 
 # =========================
 # ユーティリティ
@@ -186,6 +189,11 @@ def ensure_schema(df: pd.DataFrame) -> pd.DataFrame:
     df["completed"] = df["completed"].map(_parse_bool).astype(bool)
     df["tags"] = df["tags"].fillna("").astype(str)
 
+    if "status" not in df.columns:
+        df["status"] = "未着手"
+    df["status"] = df["status"].fillna("未着手").astype(str)
+    df.loc[~df["status"].isin(STATUSES), "status"] = "未着手"
+
     return df[COLUMNS].copy()
 
 
@@ -246,6 +254,7 @@ def create_sample_csv() -> pd.DataFrame:
                 "quadrant": QUADRANTS[0],
                 "deadline": today + dt.timedelta(days=1),
                 "tags": "TCAD内部対応",
+                "status": "未着手",
                 "completed": False,
             },
             {
@@ -254,6 +263,7 @@ def create_sample_csv() -> pd.DataFrame:
                 "quadrant": QUADRANTS[1],
                 "deadline": today + dt.timedelta(days=7),
                 "tags": "社内会議",
+                "status": "未着手",
                 "completed": False,
             },
         ]
@@ -307,6 +317,8 @@ class TodoApp(param.Parameterized):
 
         self.add_button = pn.widgets.Button(name="追加", button_type="primary")
 
+        self.status_input = pn.widgets.Select(name="ステータス", options=STATUSES, value="未着手")
+
         # ---------- 編集フォーム ----------
         self._editing_id: Optional[int] = None
 
@@ -321,6 +333,7 @@ class TodoApp(param.Parameterized):
         )
         self.edit_save_button = pn.widgets.Button(name="💾 保存", button_type="success")
         self.edit_cancel_button = pn.widgets.Button(name="キャンセル", button_type="default")
+        self.edit_status_select = pn.widgets.Select(name="ステータス（編集）", options=STATUSES, value="未着手")
 
         self.edit_form = pn.Column(
             pn.pane.Markdown("## ✏️ タスク編集"),
@@ -328,6 +341,7 @@ class TodoApp(param.Parameterized):
             self.edit_quadrant_input,
             self.edit_deadline_input,
             self.edit_tags_select,
+            self.edit_status_select,
             pn.Row(self.edit_save_button, self.edit_cancel_button),
             pn.layout.Divider(),
             visible=False,
@@ -402,6 +416,10 @@ class TodoApp(param.Parameterized):
         self.calendar_view = pn.Column(scroll=True, sizing_mode="stretch_both")
         self.archive_view = pn.Column(scroll=True, sizing_mode="stretch_both")
 
+        today = dt.date.today()
+        self._cal_year: int = today.year
+        self._cal_month: int = today.month
+
         self.tabs = pn.Tabs(
             ("マトリクス", self.matrix_view),
             ("カレンダー", self.calendar_view),
@@ -441,6 +459,7 @@ class TodoApp(param.Parameterized):
                         "quadrant": self.quadrant_input.value,
                         "deadline": self.deadline_input.value,
                         "tags": tags_str,
+                        "status": self.status_input.value,
                         "completed": False,
                     }
                 ]
@@ -471,6 +490,7 @@ class TodoApp(param.Parameterized):
         deadline = row["deadline"]
         self.edit_deadline_input.value = deadline if (deadline is not None and not pd.isna(deadline)) else dt.date.today()
         self.edit_tags_select.value = _normalize_tags(str(row["tags"]))
+        self.edit_status_select.value = row["status"] if row["status"] in STATUSES else "未着手"
         self.edit_form.visible = True
 
     def save_edit(self, _event: Any) -> None:
@@ -490,6 +510,7 @@ class TodoApp(param.Parameterized):
             self.df.loc[mask, "quadrant"] = self.edit_quadrant_input.value
             self.df.loc[mask, "deadline"] = self.edit_deadline_input.value
             self.df.loc[mask, "tags"] = _tags_to_str(self.edit_tags_select.value)
+            self.df.loc[mask, "status"] = self.edit_status_select.value
             save_data(self.df)
             _log_action("edit", self._editing_id, title)
             self._editing_id = None
@@ -557,6 +578,15 @@ class TodoApp(param.Parameterized):
         completed = bool(r["completed"])
         title = _escape_md(str(r["title"]))
         tags = _escape_md(str(r["tags"]))
+        status = str(r["status"]) if "status" in r.index and pd.notna(r["status"]) else "未着手"
+
+        _STATUS_COLORS = {
+            "未着手": "#94a3b8",
+            "進行中": "#3b82f6",
+            "レビュー待ち": "#f59e0b",
+            "保留": "#64748b",
+        }
+        status_color = _STATUS_COLORS.get(status, "#94a3b8")
 
         if pd.isna(deadline) or deadline is None:
             date_str = "期限未設定"
@@ -587,7 +617,7 @@ class TodoApp(param.Parameterized):
             btn_edit,
             btn_del,
             pn.pane.Markdown(
-                f"**{title}**  \n<span style='color:#64748b;font-size:0.85em'>📅 {date_str} &nbsp;│&nbsp; 🏷️ {tags}</span>",
+                f"**{title}**  \n<span style='color:#64748b;font-size:0.85em'>📅 {date_str} &nbsp;│&nbsp; 🏷️ {tags} &nbsp;│&nbsp; <span style='background:{status_color};color:#fff;border-radius:4px;padding:1px 6px;font-size:0.8em'>{status}</span></span>",
                 styles=style,
             ),
             sizing_mode="stretch_width",
@@ -631,6 +661,149 @@ class TodoApp(param.Parameterized):
             pass
 
     # =====================
+    # カレンダー操作
+    # =====================
+    def _shift_month(self, delta: int) -> None:
+        m = self._cal_month + delta
+        y = self._cal_year
+        while m > 12:
+            m -= 12
+            y += 1
+        while m < 1:
+            m += 12
+            y -= 1
+        self._cal_year = y
+        self._cal_month = m
+        self.refresh_ui()
+
+    def _go_to_today(self) -> None:
+        t = dt.date.today()
+        self._cal_year = t.year
+        self._cal_month = t.month
+        self.refresh_ui()
+
+    def _build_calendar_section(self, active_df: pd.DataFrame) -> list:
+        import calendar as cal_mod
+        year = self._cal_year
+        month = self._cal_month
+        today = dt.date.today()
+
+        prev_btn = pn.widgets.Button(name="◀ 前月", width=80, button_type="light")
+        today_btn = pn.widgets.Button(name="今月", width=60, button_type="primary")
+        next_btn = pn.widgets.Button(name="次月 ▶", width=80, button_type="light")
+        prev_btn.on_click(lambda _e: self._shift_month(-1))
+        today_btn.on_click(lambda _e: self._go_to_today())
+        next_btn.on_click(lambda _e: self._shift_month(1))
+
+        nav = pn.Row(
+            prev_btn,
+            pn.pane.Markdown(f"## {year}年 {month}月", margin=(4, 12), styles={"color": "#1e293b"}),
+            today_btn,
+            next_btn,
+            sizing_mode="stretch_width",
+        )
+
+        wd_colors = {"土": "#3b82f6", "日": "#ef4444"}
+        wd_row = pn.GridBox(
+            *[
+                pn.pane.Markdown(
+                    f"**{w}**",
+                    styles={
+                        "text-align": "center",
+                        "color": wd_colors.get(w, "#64748b"),
+                        "background": "#f8fafc",
+                        "border-radius": "6px",
+                        "padding": "4px 0",
+                    },
+                )
+                for w in WDAYS
+            ],
+            ncols=7,
+            sizing_mode="stretch_width",
+        )
+
+        task_map: dict[dt.date, list] = {}
+        for _, row in active_df.iterrows():
+            d = row["deadline"]
+            if d is not None and not (isinstance(d, float) and pd.isna(d)):
+                try:
+                    d = cast(dt.date, d)
+                    if d.year == year and d.month == month:
+                        task_map.setdefault(d, []).append(row)
+                except Exception:
+                    pass
+
+        _Q_COLORS = {
+            QUADRANTS[0]: "#ef4444",
+            QUADRANTS[1]: "#6366f1",
+            QUADRANTS[2]: "#f59e0b",
+            QUADRANTS[3]: "#94a3b8",
+        }
+
+        cells: list = []
+        weeks = cal_mod.monthcalendar(year, month)
+        for week in weeks:
+            for day in week:
+                if day == 0:
+                    cells.append(
+                        pn.pane.Markdown(
+                            "",
+                            styles={
+                                "background": "#f8fafc",
+                                "border-radius": "8px",
+                                "min-height": "80px",
+                                "border": "1px solid #f1f5f9",
+                            },
+                        )
+                    )
+                else:
+                    date = dt.date(year, month, day)
+                    is_today = date == today
+                    tasks = task_map.get(date, [])
+
+                    cell_style = {
+                        "background": "#eff6ff" if is_today else "#ffffff",
+                        "border": "2px solid #6366f1" if is_today else "1px solid #e2e8f0",
+                        "border-radius": "10px",
+                        "padding": "6px",
+                        "min-height": "80px",
+                    }
+
+                    day_label = f"**{day}**{'　今日' if is_today else ''}"
+                    day_md = pn.pane.Markdown(
+                        day_label,
+                        styles={
+                            "color": "#6366f1" if is_today else "#1e293b",
+                            "margin-bottom": "2px",
+                            "font-size": "0.9rem",
+                        },
+                    )
+
+                    task_items: list = []
+                    for tr in tasks[:3]:
+                        t_title = _escape_md(str(tr["title"]))
+                        if len(t_title) > 12:
+                            t_title = t_title[:12] + "…"
+                        q_color = _Q_COLORS.get(str(tr["quadrant"]), "#6366f1")
+                        task_items.append(
+                            pn.pane.Markdown(
+                                f"<span style='background:{q_color};color:#fff;border-radius:4px;padding:1px 5px;font-size:0.72rem;display:inline-block;margin:1px 0'>{t_title}</span>",
+                            )
+                        )
+                    if len(tasks) > 3:
+                        task_items.append(
+                            pn.pane.Markdown(
+                                f"*+{len(tasks) - 3}件*",
+                                styles={"color": "#64748b", "font-size": "0.75rem"},
+                            )
+                        )
+
+                    cells.append(pn.Column(day_md, *task_items, styles=cell_style))
+
+        grid = pn.GridBox(*cells, ncols=7, sizing_mode="stretch_width")
+        return [nav, wd_row, grid]
+
+    # =====================
     # 再描画
     # =====================
     def refresh_ui(self) -> None:
@@ -654,16 +827,7 @@ class TodoApp(param.Parameterized):
             cell.objects = [pn.pane.Markdown(f"### {q}"), *rows]
 
         # ----- Calendar -----
-        def _sort_key(s: pd.Series) -> pd.Series:
-            dt_s = pd.to_datetime(s, errors="coerce")
-            return dt_s.fillna(pd.Timestamp.max)
-
-        sorted_active = active.sort_values("deadline", key=_sort_key)
-
-        self.calendar_view.objects = [
-            pn.pane.Markdown("## 期限順"),
-            *[self.get_task_row(r) for _, r in sorted_active.iterrows()],
-        ]
+        self.calendar_view.objects = self._build_calendar_section(active)
 
         # ----- Archive -----
         done_df = self.df[self.df["completed"]].copy()
@@ -686,6 +850,7 @@ template = pn.template.FastListTemplate(
         app.quadrant_input,
         app.deadline_input,
         app.tags_select,
+        app.status_input,
         app.add_button,
         pn.layout.Divider(),
         app.edit_form,
