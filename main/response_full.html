@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en" >
+  <head>
+    <meta charset="utf-8">
+    <title>✨ Eisenhower Matrix ToDo</title>
+<link rel="apple-touch-icon" sizes="180x180" href="static/extensions/panel/images/apple-touch-icon.png">    <link rel="icon" href="./favicon.ico" type="">
+    <meta name="name" content="✨ Eisenhower Matrix ToDo">
+    <style>
+      html, body {
+	display: flow-root;
+        box-sizing: border-box;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+    <link rel="stylesheet" href="static/extensions/panel/bundled/notificationarea/notyf@3/notyf.min.css?v=1.8.2" type="text/css" />
+    <link rel="stylesheet" href="static/extensions/panel/bundled/font-awesome/css/all.min.css?v=1.8.2" type="text/css" />
+    <link rel="stylesheet" href="static/extensions/panel/css/notifications.css?v=1.8.2" type="text/css" />
+    <style>
+        
+:root {
+    --accent: #6366f1;
+    --accent-light: #a5b4fc;
+    --surface: #ffffff;
+    --surface-alt: #f8fafc;
+    --text: #1e293b;
+    --text-muted: #64748b;
+    --border: #e2e8f0;
+    --success: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+}
+.bk-root .bk-btn-success { background: var(--success) !important; border: none !important; border-radius: 8px !important; }
+.bk-root .bk-btn-danger { background: var(--danger) !important; border: none !important; border-radius: 8px !important; }
+.bk-root .bk-btn-warning { background: var(--warning) !important; border: none !important; border-radius: 8px !important; }
+.bk-root .bk-btn-primary { background: var(--accent) !important; border: none !important; border-radius: 8px !important; }
+.bk-root .bk-btn-light { background: #f1f5f9 !important; border: 1px solid var(--border) !important; border-radius: 8px !important; }
+.task-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin: 4px 0;
+    transition: box-shadow 0.2s, transform 0.1s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.task-card:hover {
+    box-shadow: 0 4px 12px rgba(99,102,241,0.12);
+    transform: translateY(-1px);
+}
+.task-overdue {
+    border-left: 4px solid var(--danger) !important;
+}
+
+    </style>
+<script type="esms-options">{"shimMode": true}</script>
+
+<script type="text/javascript" src="static/extensions/panel/bundled/reactiveesm/es-module-shims@^1.10.0/dist/es-module-shims.min.js"></script>
+<script type="text/javascript" src="static/js/bokeh.min.js?v=aaa1d9eb9978bed879c2ba16b18b23ca090a15d8331c17bc741c174bec71142630feffe701eadbb54b5a3c75ac7dea5ce79c63b6edd815dbd61929c3d504d208"></script>
+<script type="text/javascript" src="static/js/bokeh-gl.min.js?v=6632ebebcaafc3b3857a591862abe5e3d3900205c9e8152773ecc464c9b17de19f15bc1a4166299398f58aafc30b5647c52d5528e0bcf34d0eace4a4bad797ac"></script>
+<script type="text/javascript" src="static/js/bokeh-widgets.min.js?v=329fa1f00e6188d4998a17235dcbd18bbbaa242d10f43f267f18302856893be0dc5011741440221c391f2465e8b66658292c660118ecc013cb6fd0e1c99df75e"></script>
+<script type="text/javascript" src="static/js/bokeh-tables.min.js?v=cb767183fd81f2095b7a30b15a314d8c6de4c296eb8fb69f013e4962ba04a78d6d00008d1da61e899a693c0bb7c8b96773e9bded957360101d4f56e2500db90b"></script>
+<script type="text/javascript" src="static/extensions/panel/bundled/notificationarea/notyf@3/notyf.min.js"></script>
+<script type="text/javascript" src="static/extensions/panel/panel.min.js?v=2b890e16822b93ca79f71138e845c25ff5054e0fd9345130495e0838301fe9dc"></script>
+
+<script type="text/javascript">
+  Bokeh.set_log_level("info");
+</script>    <!-- Template CSS -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato&subset=latin,latin-ext">
+    <link rel="stylesheet" href="static/extensions/panel/css/notifications.css?v=1.8.2">
+    <link rel="stylesheet" href="static/extensions/panel/css/loadingspinner.css?v=1.8.2">
+    <link rel="stylesheet" href="static/extensions/panel/css/gridspec.css?v=1.8.2">
+    <link rel="stylesheet" href="static/extensions/panel/css/listpanel.css?v=1.8.2">
+    <link rel="stylesheet" href="static/extensions/panel/css/markdown.css?v=1.8.2">
+    <link rel="stylesheet" href="static/extensions/panel/css/button.css?v=1.8.2">
+    <link rel="stylesheet" href="static/extensions/panel/css/select.css?v=1.8.2">
+    <link rel="stylesheet" href="static/extensions/panel/css/divider.css?v=1.8.2">
+    <link rel="stylesheet" href="static/extensions/panel/css/loading.css?v=1.8.2">
+    <link rel="stylesheet" href="static/extensions/panel/bundled/theme/default.css?v=1.8.2">
+    <link rel="stylesheet" href="static/extensions/panel/bundled/vanillatemplate/vanilla.css?v=1.8.2">
+
+<style>
+  :root {
+    --header-background: #6366f1;
+    --header-color: var(--design-primary-text-color, var(--panel-on-primary-color));
+    --sidebar-width: 320px;
+  }
+  #header {
+    --background-color: var(--header-background);
+    --text-color: var(--header-color);
+    --design-background-text-color: var(--header-color);
+    --design-background-color: var(--header-background);
+    background-color: var(--header-background);
+    color: var(--header-color);
+    box-shadow: 5px 5px 20px silver;
+  }
+  #sidebar {
+    width: var(--sidebar-width);
+  }
+</style>
+
+    <style type="text/css">
+    
+:host(.pn-loading):before, .pn-loading:before {
+  background-color: #c3c3c3;
+  mask-size: auto calc(min(50%, 300px));
+  -webkit-mask-size: auto calc(min(50%, 300px));
+}
+    </style>
+
+    <!-- Template JS -->
+
+  </head>
+  <body>
+<div id="container">
+  <nav id="header">
+    <span onclick="closeNav()" id="sidebar-button">
+      <div class="pn-bar"></div>
+      <div class="pn-bar"></div>
+      <div class="pn-bar"></div>
+    </span>
+    <div class="app-header">
+      <a class="title" href="" >&nbsp;✨ Eisenhower Matrix ToDo</a>
+    </div>
+    <div id="header-items">
+    </div>
+    <div class="pn-busy-container">
+      <div id="36160cf9-c61d-4bc8-bc00-ecd2b9a71d5d" data-root-id="p1334" style="display: contents;"></div>
+    </div>
+  </nav>
+
+  <div id="content">
+    <div class="sidenav " id="sidebar">
+      <ul class="nav flex-column">
+          <div id="913df8cd-4e4d-410d-8ac6-15f9693eb129" data-root-id="p1515" style="display: contents;"></div>
+          <div id="e8783b3b-f3b2-402c-8bb6-3ed2c7dc1602" data-root-id="p1516" style="display: contents;"></div>
+          <div id="9dae0ac4-9228-4570-aeed-e0ea6621fbd5" data-root-id="p1518" style="display: contents;"></div>
+          <div id="fd43c170-aa4c-4042-8761-51959ed58ff8" data-root-id="p1519" style="display: contents;"></div>
+          <div id="7b012f1c-0995-4d0b-a7fe-bc4435d26625" data-root-id="p1520" style="display: contents;"></div>
+          <div id="3181d56f-9432-4afc-a36c-a41a335ee4d3" data-root-id="p1521" style="display: contents;"></div>
+          <div id="c273eaae-3723-4575-b0e7-c7fd02c08590" data-root-id="p1523" style="display: contents;"></div>
+          <div id="ade3e2a1-e927-4b8d-8dcb-e1f043430296" data-root-id="p1524" style="display: contents;"></div>
+          <div id="58ba0871-57f6-4763-beee-e2e6a9e6fb77" data-root-id="p1534" style="display: contents;"></div>
+          <div id="3675b83d-1621-4732-bc88-14b544624cff" data-root-id="p1535" style="display: contents;"></div>
+          <div id="5c3cb769-b06e-4044-8c8e-eaa67abb35aa" data-root-id="p1536" style="display: contents;"></div>
+          <div id="e5587902-c037-49a7-9139-30b19e3d6229" data-root-id="p1537" style="display: contents;"></div>
+      </ul>
+    </div>
+
+    <div class="main" id="main">
+      <div id="f3132764-e5ff-468e-843e-a29cc28aae8e" data-root-id="p1335" style="display: contents;"></div>
+
+      <div id="pn-Modal" class="pn-modal header-adjust">
+	<div class="pn-modal-content">
+	  <span class="pn-modalclose" id="pn-closeModal">&times;</span>
+	</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openNav() {
+    document.getElementById("sidebar").classList.remove("hidden");
+    document.getElementById("sidebar-button").onclick = closeNav;
+  }
+
+  function closeNav() {
+    document.getElementById("sidebar").classList.add("hidden");
+    document.getElementById("sidebar-button").onclick = openNav;
+  }
+
+  var modal = document.getElementById("pn-Modal");
+  var span = document.getElementById("pn-closeModal");
+
+  span.onclick = function() {
+    modal.style.display = "none";
+  }
+
+  window.onclick = function(event) {
+    if (event.target == modal) {
+      modal.style.display = "none";
+    }
+  }
+</script>
+
+<div id="6bd3b952-4187-4094-8deb-ae78283240fb" data-root-id="p1322" style="display: contents;"></div>
+<div id="73b061a2-c3c9-41dc-8fb4-5a7f25c40594" data-root-id="p1324" style="display: contents;"></div>
+<div id="793d0ed8-2c16-4106-9e5a-2aaa91340a56" data-root-id="p1316" style="display: contents;"></div>
+<div id="42c32900-13d3-4913-b7df-23a8a9128020" data-root-id="p1331" style="display: contents;"></div>
+<div id="f5374dbd-a4bf-4e57-bc44-d7d0f712472e" data-root-id="p1332" style="display: contents;"></div>
+
+
+  
+    <script type="application/json" id="p1548">
+      {}
+    </script>
+    <script type="text/javascript">
+      (function() {
+        const fn = function() {
+          Bokeh.safely(function() {
+            (function(root) {
+              function embed_document(root) {
+              const docs_json = document.getElementById('p1548').textContent;
+              const render_items = [{"token":"eyJzZXNzaW9uX2lkIjogImxnT3p2Rkp4NmI1all1eWtYeHQ3c2FRcDBrNm5Bd3VMY0JrNnRYUE5vWG5iIiwgInNlc3Npb25fZXhwaXJ5IjogMTc3OTg3Njc1MCwgIl9fYmtfX3psaWJfIjogImVOcXJWc3BJVFV4SkxTcFdzbEtvVnZMSUx5NEJNcFJ5OHBNVGN6S0FIQ3RUQXdOekpSMEZwZERpMUNKZHhfVFVQTEI4Y21sUmpyNkZucUd4bmdGSTBqRTVPYlVBTEtHbHI2VlVDeFJKenNfUHprd0ZHd3JpSmhhbGwtWUM5VUlFYWdFWmlDTTQifQ","roots":{"p1316":"793d0ed8-2c16-4106-9e5a-2aaa91340a56","p1322":"6bd3b952-4187-4094-8deb-ae78283240fb","p1324":"73b061a2-c3c9-41dc-8fb4-5a7f25c40594","p1331":"42c32900-13d3-4913-b7df-23a8a9128020","p1332":"f5374dbd-a4bf-4e57-bc44-d7d0f712472e","p1334":"36160cf9-c61d-4bc8-bc00-ecd2b9a71d5d","p1335":"f3132764-e5ff-468e-843e-a29cc28aae8e","p1515":"913df8cd-4e4d-410d-8ac6-15f9693eb129","p1516":"e8783b3b-f3b2-402c-8bb6-3ed2c7dc1602","p1518":"9dae0ac4-9228-4570-aeed-e0ea6621fbd5","p1519":"fd43c170-aa4c-4042-8761-51959ed58ff8","p1520":"7b012f1c-0995-4d0b-a7fe-bc4435d26625","p1521":"3181d56f-9432-4afc-a36c-a41a335ee4d3","p1523":"c273eaae-3723-4575-b0e7-c7fd02c08590","p1524":"ade3e2a1-e927-4b8d-8dcb-e1f043430296","p1534":"58ba0871-57f6-4763-beee-e2e6a9e6fb77","p1535":"3675b83d-1621-4732-bc88-14b544624cff","p1536":"5c3cb769-b06e-4044-8c8e-eaa67abb35aa","p1537":"e5587902-c037-49a7-9139-30b19e3d6229"},"root_ids":["p1316","p1322","p1324","p1331","p1332","p1334","p1335","p1515","p1516","p1518","p1519","p1520","p1521","p1523","p1524","p1534","p1535","p1536","p1537"],"use_for_title":false}];
+              root.Bokeh.embed.embed_items(docs_json, render_items);
+              }
+              if (root.Bokeh !== undefined) {
+                embed_document(root);
+              } else {
+                let attempts = 0;
+                const timer = setInterval(function(root) {
+                  if (root.Bokeh !== undefined) {
+                    clearInterval(timer);
+                    embed_document(root);
+                  } else {
+                    attempts++;
+                    if (attempts > 100) {
+                      clearInterval(timer);
+                      console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+                    }
+                  }
+                }, 10, root)
+              }
+            })(window);
+          });
+        };
+        if (document.readyState != "loading") fn();
+      else document.addEventListener("DOMContentLoaded", fn, {once: true});
+      })();
+    </script>
+  </body>
+</html>

@@ -676,40 +676,25 @@ class TodoApp(param.Parameterized):
 # =========================
 app = TodoApp()
 
-# =========================
-# UI レイアウト（テンプレート代わり）
-# =========================
-sidebar_panel = pn.Column(
-    pn.pane.Markdown("# ✨ Eisenhower Matrix ToDo"),
-    pn.layout.Divider(),
-    pn.pane.Markdown("## 📝 新規タスク"),
-    app.title_input,
-    app.quadrant_input,
-    app.deadline_input,
-    app.tags_select,
-    app.add_button,
-    pn.layout.Divider(),
-    app.edit_form,
-    pn.pane.Markdown("## フィルタ"),
-    app.filter_tag,
-    pn.layout.Divider(),
-    pn.pane.Markdown("## 📊 Tag別タスク数"),
-    app.tag_bar_pane,
-    width=300,
-    height=900,
-    scroll=True,
-    margin=0,
+template = pn.template.MaterialTemplate(
+    title="✨ Eisenhower Matrix ToDo",
+    sidebar=[
+        "## 📝 新規タスク",
+        app.title_input,
+        app.quadrant_input,
+        app.deadline_input,
+        app.tags_select,
+        app.add_button,
+        pn.layout.Divider(),
+        app.edit_form,
+        app.filter_tag,
+        pn.layout.Divider(),
+        "## 📊 Tag別タスク数",
+        app.tag_bar_pane,
+    ],
+    main=[app.tabs],
+    header_background="#6366f1",
+    sidebar_width=320,
 )
 
-main_panel = pn.Column(
-    pn.pane.Markdown("## タスク管理"),
-    app.tabs,
-    height=900,
-    width=1000,
-    margin=0,
-)
-
-# 水平レイアウト
-layout = pn.Row(sidebar_panel, main_panel, margin=0, height=900)
-
-layout.servable()
+template.servable()

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en" >
+  <head>
+    <meta charset="utf-8">
+    <title>Panel Application</title>
+<link rel="apple-touch-icon" sizes="180x180" href="static/extensions/panel/images/apple-touch-icon.png"><link rel="apple-touch-icon" href=""><link rel="icon" href="./favicon.ico">    <style>
+      html, body {
+	display: flow-root;
+        box-sizing: border-box;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+    <link rel="stylesheet" href="static/extensions/panel/bundled/notificationarea/notyf@3/notyf.min.css?v=1.8.2" type="text/css" />
+    <link rel="stylesheet" href="static/extensions/panel/bundled/font-awesome/css/all.min.css?v=1.8.2" type="text/css" />
+    <link rel="stylesheet" href="static/extensions/panel/css/notifications.css?v=1.8.2" type="text/css" />
+<script type="esms-options">{"shimMode": true}</script>
+
+<script type="text/javascript" src="static/extensions/panel/bundled/reactiveesm/es-module-shims@^1.10.0/dist/es-module-shims.min.js"></script>
+<script type="text/javascript" src="static/js/bokeh.min.js?v=aaa1d9eb9978bed879c2ba16b18b23ca090a15d8331c17bc741c174bec71142630feffe701eadbb54b5a3c75ac7dea5ce79c63b6edd815dbd61929c3d504d208"></script>
+<script type="text/javascript" src="static/js/bokeh-gl.min.js?v=6632ebebcaafc3b3857a591862abe5e3d3900205c9e8152773ecc464c9b17de19f15bc1a4166299398f58aafc30b5647c52d5528e0bcf34d0eace4a4bad797ac"></script>
+<script type="text/javascript" src="static/js/bokeh-widgets.min.js?v=329fa1f00e6188d4998a17235dcbd18bbbaa242d10f43f267f18302856893be0dc5011741440221c391f2465e8b66658292c660118ecc013cb6fd0e1c99df75e"></script>
+<script type="text/javascript" src="static/js/bokeh-tables.min.js?v=cb767183fd81f2095b7a30b15a314d8c6de4c296eb8fb69f013e4962ba04a78d6d00008d1da61e899a693c0bb7c8b96773e9bded957360101d4f56e2500db90b"></script>
+<script type="text/javascript" src="static/extensions/panel/bundled/notificationarea/notyf@3/notyf.min.js"></script>
+<script type="text/javascript" src="static/extensions/panel/panel.min.js?v=2b890e16822b93ca79f71138e845c25ff5054e0fd9345130495e0838301fe9dc"></script>
+
+<script type="text/javascript">
+  Bokeh.set_log_level("info");
+</script>  </head>
+  <body>
+    <div id="f5a6e843-1eb2-4d34-97fa-0adf82c047b6" data-root-id="p1064" style="display: contents;"></div>
+  <div id="61b4b39c-fd41-4c0d-a652-83b4e816d712" data-root-id="p1105" style="display: contents;"></div>
+  <div id="740a4a47-70b4-4f56-a60f-83557f51ba0b" data-root-id="p1112" style="display: contents;"></div>
+  <div id="6c491f18-6052-45ce-94f9-1af417f5dca8" data-root-id="p1113" style="display: contents;"></div>
+  
+    <script type="application/json" id="p1114">
+      {}
+    </script>
+    <script type="text/javascript">
+      (function() {
+        const fn = function() {
+          Bokeh.safely(function() {
+            (function(root) {
+              function embed_document(root) {
+              const docs_json = document.getElementById('p1114').textContent;
+              const render_items = [{"token":"eyJzZXNzaW9uX2lkIjogIlZOaTNuRG5KYnE3Q0dieVplcENuRXJGb3Ayd1ppWTJHR3RpVUlEV1ppVjR4IiwgInNlc3Npb25fZXhwaXJ5IjogMTc3OTg3NzA4NCwgIl9fYmtfX3psaWJfIjogImVOcXJWc3BJVFV4SkxTcFdzbEtvVnZMSUx5NEJNcFJ5OHBNVGN6S0FIQ3RUQXdOekpSMEZwZERpMUNKZHhfVFVQTEI4Y21sUmpyNkZucUd4bmdGSTBqRTVPYlVBTEtHbHI2VlVDeFJKenNfUHprd0ZHd3JpSmhhbGwtWUM5VUlFYWdFWmlDTTQifQ","roots":{"p1064":"f5a6e843-1eb2-4d34-97fa-0adf82c047b6","p1105":"61b4b39c-fd41-4c0d-a652-83b4e816d712","p1112":"740a4a47-70b4-4f56-a60f-83557f51ba0b","p1113":"6c491f18-6052-45ce-94f9-1af417f5dca8"},"root_ids":["p1064","p1105","p1112","p1113"],"use_for_title":false}];
+              root.Bokeh.embed.embed_items(docs_json, render_items);
+              }
+              if (root.Bokeh !== undefined) {
+                embed_document(root);
+              } else {
+                let attempts = 0;
+                const timer = setInterval(function(root) {
+                  if (root.Bokeh !== undefined) {
+                    clearInterval(timer);
+                    embed_document(root);
+                  } else {
+                    attempts++;
+                    if (attempts > 100) {
+                      clearInterval(timer);
+                      console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+                    }
+                  }
+                }, 10, root)
+              }
+            })(window);
+          });
+        };
+        if (document.readyState != "loading") fn();
+      else document.addEventListener("DOMContentLoaded", fn, {once: true});
+      })();
+    </script>
+  </body>
+</html>

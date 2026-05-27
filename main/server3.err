@@ -1,0 +1,8 @@
+2026-05-27 18:42:01,211 Starting Bokeh server version 3.8.0 (running on Tornado 6.4.2)
+2026-05-27 18:42:01,214 User authentication hooks NOT provided (default user enabled)
+2026-05-27 18:42:01,226 Bokeh app running at: http://127.0.0.1:5007/To_do
+2026-05-27 18:42:01,227 Starting Bokeh server with process id: 21872
+2026-05-27 18:43:07,994 WebSocket connection opened
+2026-05-27 18:43:07,997 ServerConnection created
+2026-05-27 18:43:23,876 WebSocket connection opened
+2026-05-27 18:43:23,878 ServerConnection created

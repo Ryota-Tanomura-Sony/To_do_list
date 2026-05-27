@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en" >
+  <head>
+    <meta charset="utf-8">
+    <title>â¨ Eisenhower Matrix ToDo</title>
+<link rel="apple-touch-icon" sizes="180x180" href="static/extensions/panel/images/apple-touch-icon.png">    <link rel="icon" href="./favicon.ico" type="">
+    <meta name="name" content="â¨ Eisenhower Matrix ToDo">
+    <style>
+      html, body {
+	display: flow-root;
+        box-sizing: border-box;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+    <link rel="stylesheet" href="static/extensions/panel/bundled/notificationarea/notyf@3/notyf.min.css?v=1.8.2" type="text/css" />
+    <link rel="stylesheet" href="static/extensions/panel/bundled/font-awesome/css/all.min.css?v=1.8.2" type="text/css" />
+    <link rel="stylesheet" href="static/extensions/panel/css/notifications.css?v=1.8.2" type="text/css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans" type="text/css" />
+    <style>
+        
+:root {
+    --accent: #6366f1;
+    --accent-light: #a5b4fc;
+    --surface: #ffffff;
+    --surface-alt: #f8fafc;
+    --text: #1e293b;
+    --text-muted: #64748b;
+    --border: #e2e8f0;
+    --success: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+}
+.bk-root .bk-btn-success { background: var(--success) !important; border: none !important; border-radius: 8px !important; }
+.bk-root .bk-btn-danger { background: var(--danger) !important; border: none !important; border-radius: 8px !important; }
+.bk-root .bk-btn-warning { background: var(--warning) !important; border: none !important; border-radius: 8px !important; }
+.bk-root .bk-btn-primary { background: var(--accent) !important; border: none !important; border-radius: 8px !important; }
+.bk-root .bk-btn-light { background: #f1f5f9 !important; border: 1px solid var(--border) !important; border-radius: 8px !important; }
+.task-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin: 4px 0;
+    transition: box-shadow 0.2s, transform 0.1s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.task-card:hover {
+    box-shadow: 0 4px 12px rgba(99,102,241,0.12);
+    transform: translateY(-1px);
+}
+.task-overdue {
+    border-left: 4px solid var(--danger) !important;
+}
+
+    </style>
+<script type="esms-options">{"shimMode": true}</script>
+
+<script type="text/javascript" src="static/extensions/panel/bundled/reactiveesm/es-module-shims@^1.10.0/dist/es-module-shims.min.js"></script>
+<script type="text/javascript" src="static/js/bokeh.min.js?v=aaa1d9eb9978bed879c2ba16b18b23ca090a15d8331c17bc741c174bec71142630feffe701eadbb54b5a3c75ac7dea5ce79c63b6edd815dbd61929c3d504d208"></script>
+<script type="text/javascript" src="static/js/bokeh-gl.min.js?v=6632ebebcaafc3b3857a591862abe5e3d3900205c9e8152773ecc464c9b17de19f15bc1a4166299398f58aafc30b5647c52d5528e0bcf34d0eace4a4bad797ac"></script>
+<script type="text/javascript" src="static/js/bokeh-widgets.min.js?v=329fa1f00e6188d4998a17235dcbd18bbbaa242d10f43f267f18302856893be0dc5011741440221c391f2465e8b66658292c660118ecc013cb6fd0e1c99df75e"></script>
+<script type="text/javascript" src="static/js/bokeh-tables.min.js?v=cb767183fd81f2095b7a30b15a314d8c6de4c296eb8fb69f013e4962ba04a78d6d00008d1da61e899a693c0bb7c8b96773e9bded957360101d4f56e2500db90b"></script>
+<script type="text/javascript" src="static/extensions/panel/bundled/notificationarea/notyf@3/notyf.min.js"></script>
+<script type="text/javascript" src="static/extensions/panel/panel.min.js?v=2b890e16822b93ca79f71138e845c25ff5054e0fd9345130495e0838301fe9dc"></script>
+
+<script type="module" src="./static/extensions/panel/bundled/@microsoft/fast-components@2.30.6/dist/fast-components.js"></script>
+<script type="module" src="./static/extensions/panel/bundled/fast/js/fast_design.js"></script>
+<script type="text/javascript">
+  Bokeh.set_log_level("info");
+</script>    <!-- Template CSS -->
+    <link rel="stylesheet" href="static/extensions/panel/css/notifications.css?v=1.8.2">
+    <link rel="stylesheet" href="static/extensions/panel/css/loadingspinner.css?v=1.8.2">
+    <link rel="stylesheet" href="static/extensions/panel/css/gridspec.css?v=1.8.2">
+    <link rel="stylesheet" href="static/extensions/panel/css/listpanel.css?v=1.8.2">
+    <link rel="stylesheet" href="static/extensions/panel/css/markdown.css?v=1.8.2">
+    <link rel="stylesheet" href="static/extensions/panel/css/button.css?v=1.8.2">
+    <link rel="stylesheet" href="static/extensions/panel/css/select.css?v=1.8.2">
+    <link rel="stylesheet" href="static/extensions/panel/css/divider.css?v=1.8.2">
+    <link rel="stylesheet" href="static/extensions/panel/css/loading.css?v=1.8.2">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans">
+    <link rel="stylesheet" href="static/extensions/panel/bundled/theme/default.css?v=1.8.2">
+    <link rel="stylesheet" href="static/extensions/panel/bundled/fastbasetemplate/fast.css?v=1.8.2">
+    <link rel="stylesheet" href="static/extensions/panel/bundled/fastlisttemplate/fast_list_template.css?v=1.8.2">
+
+<style>
+  :root {
+    --background-color: #ffffff;
+    --body-font: Open Sans, sans-serif;
+    --corner-radius: 3;
+    --header-background: #6366f1;
+    --header-color: #ffffff;
+    --sidebar-width: 320px;
+    --right-sidebar-width:  330px;
+  }
+  body {
+    color: #2B2B2B;
+    background-color: var(--background-color);
+    font-family: var(--body-font);
+  }
+  #header a {
+    color: currentColor;
+  }
+  #header-design-provider {
+    --neutral-fill-hover: var(--header-background);
+    --neutral-fill-rest: var(--header-background);
+    --neutral-foreground-rest: var(--header-color);
+    --design-background-text-color: var(--header-color);
+    --design-background-color: var(--header-background);
+    background: var(--header-background);
+    color: var(--header-color);
+  }
+  #sidebar {
+    min-width: var(--sidebar-width);
+    max-width: var(--sidebar-width);
+  }
+  #right-sidebar {
+    min-width: var(--right-sidebar-width);
+    max-width: var(--right-sidebar-width);
+  }
+</style>
+
+    <style type="text/css">
+    
+:host(.pn-loading):before, .pn-loading:before {
+  background-color: #c3c3c3;
+  mask-size: auto calc(min(50%, 300px));
+  -webkit-mask-size: auto calc(min(50%, 300px));
+}
+    </style>
+
+    <!-- Template JS -->
+    <script src="static/extensions/panel/bundled/fastbasetemplate/fast_template.js"></script>
+    <script src="./static/extensions/panel/bundled/@microsoft/fast-components@2.30.6/dist/fast-components.js" type="module"></script>
+    <script src="./static/extensions/panel/bundled/fast/js/fast_design.js" type="module"></script>
+
+<!-- Fast Script -->
+<script type="text/javascript">
+document.addEventListener('DOMContentLoaded', (event) => {
+  const header_design = new window.fastDesignProvider("#header-design-provider");
+  const body_design = window.bodyDesign = new window.fastDesignProvider("#body-design-provider");
+  body_design.setLuminance(1.0);
+  body_design.setAccentColor("#6366f1")
+  body_design.setNeutralColor("#000000");
+  header_design.setLuminance("0.23");
+  header_design.setAccentColor("#ffffff");
+  header_design.setNeutralColor("#0072B5");
+});
+</script>
+  </head>
+  <body>
+<fast-design-system-provider id="body-design-provider" use-defaults>
+  <div id="container">
+    <fast-design-system-provider id="header-design-provider">
+      <nav id="header" class="shadow" >
+	<span onclick="closeNav()" id="sidebar-button">
+	  <div class="pn-bar"></div>
+	  <div class="pn-bar"></div>
+	  <div class="pn-bar"></div>
+	</span>
+	<fast-tooltip anchor="sidebar-button" position="right">
+	  Toggle the Sidebar
+	</fast-tooltip>
+	<div class="app-header">
+	  <a class="title" href="" >â¨ Eisenhower Matrix ToDo</a>
+	</div>
+	<div id="header-items">
+	</div>
+	<div class="pn-busy-container" id="busy-container">
+	  <div id="6e6f8d1a-a14c-454a-bc92-e6e56c9a3088" data-root-id="p1896" style="display: contents;"></div>
+	</div>
+	<fast-tooltip anchor="busy-container" position="left">
+	  Busy Indicator
+	</fast-tooltip>
+      </nav>
+    </fast-design-system-provider>
+
+    <div class="row" id="content">
+      <div class="sidenav " id="sidebar">
+	<ul class="nav flex-column">
+	  <div id="561e2f5f-ed28-49c4-82b5-8ef262a54dc5" data-root-id="p2077" style="display: contents;"></div>
+	  <div id="c781c780-0302-4535-a59f-0181b9bdd323" data-root-id="p2078" style="display: contents;"></div>
+	  <div id="b582e6e0-9230-4426-a617-d7b4880a7706" data-root-id="p2080" style="display: contents;"></div>
+	  <div id="78f66b59-0db3-488b-9059-22878622c441" data-root-id="p2081" style="display: contents;"></div>
+	  <div id="fe1c897f-e2d2-4bee-9b34-ab260a9f9e94" data-root-id="p2082" style="display: contents;"></div>
+	  <div id="212d40e4-262d-4583-b265-e246c7f9cbed" data-root-id="p2083" style="display: contents;"></div>
+	  <div id="a8bae17e-d02e-4c72-9462-32f3674cf799" data-root-id="p2085" style="display: contents;"></div>
+	  <div id="49c724ea-1f91-4337-a776-f6a4ebfba94d" data-root-id="p2086" style="display: contents;"></div>
+	  <div id="48541385-6afe-4935-b2ae-129fab15f4fb" data-root-id="p2096" style="display: contents;"></div>
+	  <div id="c88c0d89-7c24-4ad2-9f86-23822be86689" data-root-id="p2097" style="display: contents;"></div>
+	  <div id="69d5f5f5-3941-4de2-a95b-41386625bfea" data-root-id="p2098" style="display: contents;"></div>
+	  <div id="911d934a-ed48-4e4a-8d80-ad785c128800" data-root-id="p2099" style="display: contents;"></div>
+	</ul>
+      </div>
+
+      <div class="main" id="main">
+        <div class="card-margin stretch_width">
+	  <fast-card class="pn-wrapper">
+	    <span class="fullscreen-button" onclick="toggleFullScreen(this)">
+	      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 18 18">
+		<path d="M4.5 11H3v4h4v-1.5H4.5V11zM3 7h1.5V4.5H7V3H3v4zm10.5 6.5H11V15h4v-4h-1.5v2.5zM11 3v1.5h2.5V7H15V3h-4z"/>
+	      </svg>
+	    </span>
+	    <div id="f320978d-7ec7-444d-93c2-c7deb87f169b" data-root-id="p1897" style="display: contents;"></div>
+	  </fast-card>
+	</div>
+      </div>
+      <fast-dialog id="pn-Modal" hidden>
+        <fast-button class="pn-modal-close" id="pn-closeModal">&times;</fast-button>
+        <div class="pn-modal-content">
+	</div>
+      </fast-dialog>
+    </div>
+  </div>
+</fast-design-system-provider>
+
+<script type="text/javascript">
+  
+</script>
+
+<script type="text/javascript">
+  function openNav() {
+    document.getElementById("sidebar").classList.remove("hidden");
+    document.getElementById("sidebar-button").onclick = closeNav;
+  }
+
+  function closeNav() {
+    document.getElementById("sidebar").classList.add("hidden");
+    document.getElementById("sidebar-button").onclick = openNav;
+  }
+
+  function openNavRight() {
+    document.getElementById("right-sidebar").classList.remove("hidden");
+    document.getElementById("right-sidebar-button").onclick = closeNavRight;
+  }
+
+  function closeNavRight() {
+    document.getElementById("right-sidebar").classList.add("hidden");
+    document.getElementById("right-sidebar-button").onclick = openNavRight;
+  }
+
+  var modal = document.getElementById("pn-Modal");
+  var span = document.getElementById("pn-closeModal");
+
+  span.onclick = function() {
+    modal.style.display = "none";
+  }
+
+  window.onclick = function(event) {
+    if (event.target == modal) {
+      modal.style.display = "none";
+    }
+  }
+</script>
+
+<div id="22184d65-7cbc-4690-90e2-c1c92c363c97" data-root-id="p1884" style="display: contents;"></div>
+<div id="712165bf-d7a5-44ea-b76f-002cbcaf9b07" data-root-id="p1886" style="display: contents;"></div>
+<div id="741364a9-4b0c-4397-88ba-bdc3c57cb106" data-root-id="p1878" style="display: contents;"></div>
+<div id="20e7c11c-d136-49f5-9954-ad31a873b3e8" data-root-id="p1893" style="display: contents;"></div>
+<div id="951d25d5-56a8-4022-bd27-517355b91635" data-root-id="p1894" style="display: contents;"></div>
+
+
+  
+    <script type="application/json" id="p2111">
+      {}
+    </script>
+    <script type="text/javascript">
+      (function() {
+        const fn = function() {
+          Bokeh.safely(function() {
+            (function(root) {
+              function embed_document(root) {
+              const docs_json = document.getElementById('p2111').textContent;
+              const render_items = [{"token":"eyJzZXNzaW9uX2lkIjogIkFJZmE2bHFNMmRMaHZXSWVKbW9VOVpFUmNaVkNHakhzVWE1WVFpb1JTdldkIiwgInNlc3Npb25fZXhwaXJ5IjogMTc3OTg3NjE0NiwgIl9fYmtfX3psaWJfIjogImVOcEZqa0VLd2pBUVJhOFNaaW1OTFlvSTNSVVJ2SUFIaU9tWWhzYVptS1NDbHQ3ZHBDNkVXY3hfX3kzLURBT3FIa09FVnN4dzRaanlBNDYxY2tNTzdhRnBqbEFKdUVZTXNqTklhLV9mYVdDU0FaOFR4aFRyM1hhZnIzaWQxdWlUUEpQbTNwSXBzdmxZWDRrZTcwNGxyTVF0X0wxU2ItcE5BU2NtUXAwc1U0RWpvcGZLMlJmQ2trdk5QRnBjTjVhb2dwa2VlY29QTEYtYmJEMjUifQ","roots":{"p1878":"741364a9-4b0c-4397-88ba-bdc3c57cb106","p1884":"22184d65-7cbc-4690-90e2-c1c92c363c97","p1886":"712165bf-d7a5-44ea-b76f-002cbcaf9b07","p1893":"20e7c11c-d136-49f5-9954-ad31a873b3e8","p1894":"951d25d5-56a8-4022-bd27-517355b91635","p1896":"6e6f8d1a-a14c-454a-bc92-e6e56c9a3088","p1897":"f320978d-7ec7-444d-93c2-c7deb87f169b","p2077":"561e2f5f-ed28-49c4-82b5-8ef262a54dc5","p2078":"c781c780-0302-4535-a59f-0181b9bdd323","p2080":"b582e6e0-9230-4426-a617-d7b4880a7706","p2081":"78f66b59-0db3-488b-9059-22878622c441","p2082":"fe1c897f-e2d2-4bee-9b34-ab260a9f9e94","p2083":"212d40e4-262d-4583-b265-e246c7f9cbed","p2085":"a8bae17e-d02e-4c72-9462-32f3674cf799","p2086":"49c724ea-1f91-4337-a776-f6a4ebfba94d","p2096":"48541385-6afe-4935-b2ae-129fab15f4fb","p2097":"c88c0d89-7c24-4ad2-9f86-23822be86689","p2098":"69d5f5f5-3941-4de2-a95b-41386625bfea","p2099":"911d934a-ed48-4e4a-8d80-ad785c128800"},"root_ids":["p1878","p1884","p1886","p1893","p1894","p1896","p1897","p2077","p2078","p2080","p2081","p2082","p2083","p2085","p2086","p2096","p2097","p2098","p2099"],"use_for_title":false}];
+              root.Bokeh.embed.embed_items(docs_json, render_items);
+              }
+              if (root.Bokeh !== undefined) {
+                embed_document(root);
+              } else {
+                let attempts = 0;
+                const timer = setInterval(function(root) {
+                  if (root.Bokeh !== undefined) {
+                    clearInterval(timer);
+                    embed_document(root);
+                  } else {
+                    attempts++;
+                    if (attempts > 100) {
+                      clearInterval(timer);
+                      console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+                    }
+                  }
+                }, 10, root)
+              }
+            })(window);
+          });
+        };
+        if (document.readyState != "loading") fn();
+      else document.addEventListener("DOMContentLoaded", fn, {once: true});
+      })();
+    </script>
+  </body>
+</html>
