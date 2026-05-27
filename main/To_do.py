@@ -698,6 +698,7 @@ template = pn.template.FastListTemplate(
     accent_base_color="#6366f1",
     header_background="#6366f1",
     sidebar_width=320,
+    theme_toggle=False,
 )
 
 template.servable()
