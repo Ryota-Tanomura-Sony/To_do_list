@@ -545,6 +545,18 @@ class TodoApp(param.Parameterized):
         except Exception as e:
             _notify("error", f"更新に失敗しました: {e!s}")
 
+    def change_status(self, task_id: int, new_status: str) -> None:
+        """ステータスをインラインで即時変更."""
+        try:
+            mask = self.df["id"] == int(task_id)
+            if not mask.any():
+                return
+            self.df.loc[mask, "status"] = new_status
+            save_data(self.df)
+            self.refresh_ui()
+        except Exception as e:
+            _notify("error", f"ステータス更新に失敗しました: {e!s}")
+
     def delete_task(self, task_id: int) -> None:
         """タスク削除（ハードデリート）."""
         try:
@@ -612,14 +624,31 @@ class TodoApp(param.Parameterized):
         btn_del = pn.widgets.Button(name="🗑", width=40, button_type="danger")
         btn_del.on_click(lambda _e, tid=int(r["id"]): self.delete_task(tid))
 
+        status_sel = pn.widgets.Select(
+            value=status,
+            options=STATUSES,
+            width=110,
+            styles={
+                "background": status_color,
+                "color": "#fff",
+                "border-radius": "6px",
+                "font-size": "0.82rem",
+            },
+        )
+        status_sel.param.watch(
+            lambda e, tid=int(r["id"]): self.change_status(tid, e.new),
+            "value",
+        )
+
         return pn.Row(
             btn_done,
             btn_edit,
             btn_del,
             pn.pane.Markdown(
-                f"**{title}**  \n<span style='color:#64748b;font-size:0.85em'>📅 {date_str} &nbsp;│&nbsp; 🏷️ {tags} &nbsp;│&nbsp; <span style='background:{status_color};color:#fff;border-radius:4px;padding:1px 6px;font-size:0.8em'>{status}</span></span>",
+                f"**{title}**  \n<span style='color:#64748b;font-size:0.85em'>📅 {date_str} &nbsp;│&nbsp; 🏷️ {tags}</span>",
                 styles=style,
             ),
+            status_sel,
             sizing_mode="stretch_width",
             css_classes=card_classes,
             styles={"border-radius": "12px", "padding": "8px 12px", "margin": "4px 0",
